@@ -1,175 +1,246 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Markline — Watermark your photos, privately</title>
-<meta name="description" content="Add a logo watermark to your photos entirely in your browser. Nothing is uploaded anywhere.">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markline - Watermark your photos, privately</title>
+  <link rel="icon" type="image/png" href="logo3W.png">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23C99A4B'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%2312141A'/%3E%3C/svg%3E">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<header class="site-header">
-  <div class="wordmark">MARK<span class="dot">·</span>LINE</div>
-  <p class="tagline">Stamp your photos with a logo. Everything happens on your device — nothing is ever uploaded.</p>
-</header>
+  <header class="site-header">
+    <img src="logo2.png" alt="cynocor logo" class="header-logo">
+    <div class="wordmark">Mark Line by CYNOCOR</div>
+    <p class="tagline">Stamp your photos with a logo. Everything happens on your device - nothing is ever uploaded.</p>
+  </header>
 
-<main class="workspace">
+  <main class="workspace">
 
-  <!-- ============ STAGE (canvas / preview) ============ -->
-  <section class="stage-panel" aria-label="Photo preview">
-    <span class="reg-mark reg-tl" aria-hidden="true"></span>
-    <span class="reg-mark reg-tr" aria-hidden="true"></span>
-    <span class="reg-mark reg-bl" aria-hidden="true"></span>
-    <span class="reg-mark reg-br" aria-hidden="true"></span>
+    <!-- ============ STAGE & PHOTOS CONTAINER (PC Left Column) ============ -->
+    <div class="stage-container">
+      <section class="stage-panel" aria-label="Photo preview">
+        <span class="reg-mark reg-tl" aria-hidden="true"></span>
+        <span class="reg-mark reg-tr" aria-hidden="true"></span>
+        <span class="reg-mark reg-bl" aria-hidden="true"></span>
+        <span class="reg-mark reg-br" aria-hidden="true"></span>
 
-    <div class="stage" id="stage">
+        <div class="stage" id="stage">
 
-      <!-- Empty state: photo dropzone -->
-      <div class="dropzone" id="photoDropzone" tabindex="0" role="button"
-           aria-label="Upload one or more photos">
-        <svg class="dz-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" stroke-width="2"/>
-          <circle cx="16" cy="18" r="3.5" stroke="currentColor" stroke-width="2"/>
-          <path d="M4 32L16 22L26 30L34 24L44 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
-        <p class="dz-title">Drop photos here</p>
-        <p class="dz-sub">or click to browse — add one or several — JPG, PNG, WEBP, HEIC</p>
-        <p class="dz-error" id="photoError" hidden></p>
+          <!-- Empty state: photo dropzone -->
+          <div class="dropzone" id="photoDropzone" tabindex="0" role="button" aria-label="Upload one or more photos">
+            <svg class="dz-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" stroke-width="2" />
+              <circle cx="16" cy="18" r="3.5" stroke="currentColor" stroke-width="2" />
+              <path d="M4 32L16 22L26 30L34 24L44 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+            <p class="dz-title">Drop photos here</p>
+            <p class="dz-sub">or click to browse - add one or several - JPG, PNG, WEBP, HEIC</p>
+            <p class="dz-error" id="photoError" hidden></p>
+          </div>
+
+          <!-- Canvas + logo overlay, shown once a photo is loaded -->
+          <div class="canvas-wrap hidden" id="canvasWrap">
+            <canvas id="previewCanvas"></canvas>
+            <div class="coord-readout" id="coordReadout" hidden>X 50% · Y 50% · Scale 22%</div>
+            <div class="stage-hint" id="stageHint">Upload a logo to start placing your watermark →</div>
+            <div class="preview-flag" id="previewFlag" hidden>Previewing <span id="previewFlagName"></span> - the same
+              placement applies to every photo</div>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="step" id="stepPhotoCard">
+        <p class="step-eyebrow">01 / Photos</p>
+        <div class="step-body" id="photoStepBody">
+          <p class="step-empty">No photos yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONTROL RAIL ============ -->
+    <aside class="control-rail">
+
+      <div class="step is-disabled" id="stepLogoCard">
+        <p class="step-eyebrow">02 / Logo</p>
+        <div class="step-body">
+          <div class="dropzone dropzone--small" id="logoDropzone" tabindex="-1" role="button"
+            aria-label="Upload a logo image" aria-disabled="true">
+            <svg class="dz-icon dz-icon--small" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" stroke-width="2" />
+              <circle cx="16" cy="18" r="3.5" stroke="currentColor" stroke-width="2" />
+              <path d="M4 32L16 22L26 30L34 24L44 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+            <p class="dz-title dz-title--small">Drop your logo</p>
+            <p class="dz-sub">PNG with transparency works best</p>
+            <p class="dz-error" id="logoError" hidden></p>
+          </div>
+          <div class="logo-loaded hidden" id="logoLoaded">
+            <img id="logoThumb" alt="Your logo" class="logo-thumb">
+            <div>
+              <p class="logo-name" id="logoName">logo.png</p>
+              <div class="logo-actions">
+                <button type="button" class="link-btn" id="replaceLogoBtn">Replace</button>
+                <button type="button" class="link-btn link-btn--danger" id="removeLogoBtn">Remove</button>
+              </div>
+            </div>
+          </div>
+          <p class="field-hint" id="logoAppliesHint" hidden>This logo and its placement apply to every photo you've
+            added.</p>
+        </div>
       </div>
 
-      <!-- Canvas + logo overlay, shown once a photo is loaded -->
-      <div class="canvas-wrap hidden" id="canvasWrap">
-        <canvas id="previewCanvas"></canvas>
-        <div class="coord-readout" id="coordReadout" hidden>X 50% · Y 50% · Scale 22%</div>
-        <div class="stage-hint" id="stageHint">Upload a logo to start placing your watermark →</div>
-        <div class="preview-flag" id="previewFlag" hidden>Previewing <span id="previewFlagName"></span> — the same placement applies to every photo</div>
+      <div class="step is-disabled" id="stepAdjustCard">
+        <p class="step-eyebrow">03 / Place it</p>
+        <div class="step-body">
+
+          <div class="field">
+            <div class="field-label-row">
+              <label for="scaleSlider">Size</label>
+              <span class="field-value" id="scaleValue">22%</span>
+            </div>
+            <input type="range" id="scaleSlider" min="3" max="80" step="0.5" value="22">
+          </div>
+
+          <div class="field">
+            <div class="field-label-row">
+              <label for="opacitySlider">Opacity</label>
+              <span class="field-value" id="opacityValue">80%</span>
+            </div>
+            <input type="range" id="opacitySlider" min="8" max="100" step="1" value="80">
+          </div>
+
+          <div class="field">
+            <div class="field-label-row">
+              <label>Quick position</label>
+            </div>
+            <div class="preset-grid" id="presetGrid" role="group" aria-label="Snap watermark to a position">
+              <button type="button" data-x="0.08" data-y="0.08" aria-label="Top left"><span></span></button>
+              <button type="button" data-x="0.5" data-y="0.08" aria-label="Top center"><span></span></button>
+              <button type="button" data-x="0.92" data-y="0.08" aria-label="Top right"><span></span></button>
+              <button type="button" data-x="0.08" data-y="0.5" aria-label="Middle left"><span></span></button>
+              <button type="button" data-x="0.5" data-y="0.5" aria-label="Center"><span></span></button>
+              <button type="button" data-x="0.92" data-y="0.5" aria-label="Middle right"><span></span></button>
+              <button type="button" data-x="0.08" data-y="0.92" aria-label="Bottom left"><span></span></button>
+              <button type="button" data-x="0.5" data-y="0.92" aria-label="Bottom center"><span></span></button>
+              <button type="button" data-x="0.92" data-y="0.92" aria-label="Bottom right"><span></span></button>
+            </div>
+            <p class="field-hint">Or drag the watermark directly on the photo. Drag the small handle at its corner to
+              resize.</p>
+          </div>
+
+          <button type="button" class="ghost-btn" id="resetBtn">Reset placement</button>
+        </div>
       </div>
 
+      <div class="step is-disabled" id="stepDownloadCard">
+        <p class="step-eyebrow">04 / Download</p>
+        <div class="step-body">
+
+          <div class="field">
+            <div class="field-label-row"><label>File format</label></div>
+            <div class="format-toggle" role="radiogroup" aria-label="Download format">
+              <label>
+                <input type="radio" name="format" value="png" checked>
+                <span class="format-pill">PNG <em>lossless</em></span>
+              </label>
+              <label>
+                <input type="radio" name="format" value="jpg">
+                <span class="format-pill">JPG <em>smaller file</em></span>
+              </label>
+            </div>
+          </div>
+
+          <button type="button" class="primary-btn" id="downloadBtn">Download watermarked photo</button>
+          <p class="field-hint" id="downloadHint">Exports at your photo's full original resolution.</p>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- ============ PRIVACY ASSURANCE BANNER ============ -->
+  <section class="privacy-note-bar">
+    <div class="privacy-note-inner">
+      <svg class="privacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+      <span>No accounts, no uploads, no database. Your photo and logo are decoded in memory and never leave this browser
+        tab - refreshing the page clears everything.</span>
     </div>
   </section>
 
-  <!-- ============ CONTROL RAIL ============ -->
-  <aside class="control-rail">
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
 
-    <div class="step" id="stepPhotoCard">
-      <p class="step-eyebrow">01 / Photos</p>
-      <div class="step-body" id="photoStepBody">
-        <p class="step-empty">No photos yet.</p>
+        <!-- Brand & Tagline section -->
+        <div class="footer-brand">
+          <img src="logo2.png" alt="CYNOCOR" class="footer-brand-logo">
+          <p class="footer-tagline">The Apex Animal of Advanced Systems. Software, automation, and business systems
+            engineered with precision.</p>
+        </div>
+
+        <!-- Right side info section -->
+        <div class="footer-app-info">
+          <h3 class="footer-heading">CYNOCOR Tools</h3>
+          <p class="footer-subtext">Mark Line Web Application</p>
+        </div>
+
+      </div>
+
+      <!-- Bottom copyright & socials bar -->
+      <div class="footer-bottom">
+        <p class="copyright">© 2026 CYNOCOR Tools. All rights reserved.</p>
+        <div class="footer-socials">
+          <a href="mailto:" aria-label="Email" title="Email">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61593575481680" aria-label="Facebook" title="Facebook">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+            </svg>
+          </a>
+          <a href="https://www.instagram.com/cynocorofficial/" aria-label="Instagram" title="Instagram">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+            </svg>
+          </a>
+          <a href="#" aria-label="LinkedIn" title="LinkedIn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+              <rect x="2" y="9" width="4" height="12" />
+              <circle cx="4" cy="4" r="2" />
+            </svg>
+          </a>
+        </div>
       </div>
     </div>
+  </footer>
 
-    <div class="step is-disabled" id="stepLogoCard">
-      <p class="step-eyebrow">02 / Logo</p>
-      <div class="step-body">
-        <div class="dropzone dropzone--small" id="logoDropzone" tabindex="-1" role="button"
-             aria-label="Upload a logo image" aria-disabled="true">
-          <svg class="dz-icon dz-icon--small" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" stroke-width="2"/>
-            <circle cx="16" cy="18" r="3.5" stroke="currentColor" stroke-width="2"/>
-            <path d="M4 32L16 22L26 30L34 24L44 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          </svg>
-          <p class="dz-title dz-title--small">Drop your logo</p>
-          <p class="dz-sub">PNG with transparency works best</p>
-          <p class="dz-error" id="logoError" hidden></p>
-        </div>
-        <div class="logo-loaded hidden" id="logoLoaded">
-          <img id="logoThumb" alt="Your logo" class="logo-thumb">
-          <div>
-            <p class="logo-name" id="logoName">logo.png</p>
-            <div class="logo-actions">
-              <button type="button" class="link-btn" id="replaceLogoBtn">Replace</button>
-              <button type="button" class="link-btn link-btn--danger" id="removeLogoBtn">Remove</button>
-            </div>
-          </div>
-        </div>
-        <p class="field-hint" id="logoAppliesHint" hidden>This logo and its placement apply to every photo you've added.</p>
-      </div>
-    </div>
+  <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple
+    hidden>
+  <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
 
-    <div class="step is-disabled" id="stepAdjustCard">
-      <p class="step-eyebrow">03 / Place it</p>
-      <div class="step-body">
-
-        <div class="field">
-          <div class="field-label-row">
-            <label for="scaleSlider">Size</label>
-            <span class="field-value" id="scaleValue">22%</span>
-          </div>
-          <input type="range" id="scaleSlider" min="3" max="80" step="0.5" value="22">
-        </div>
-
-        <div class="field">
-          <div class="field-label-row">
-            <label for="opacitySlider">Opacity</label>
-            <span class="field-value" id="opacityValue">80%</span>
-          </div>
-          <input type="range" id="opacitySlider" min="8" max="100" step="1" value="80">
-        </div>
-
-        <div class="field">
-          <div class="field-label-row">
-            <label>Quick position</label>
-          </div>
-          <div class="preset-grid" id="presetGrid" role="group" aria-label="Snap watermark to a position">
-            <button type="button" data-x="0.08" data-y="0.08" aria-label="Top left"><span></span></button>
-            <button type="button" data-x="0.5"  data-y="0.08" aria-label="Top center"><span></span></button>
-            <button type="button" data-x="0.92" data-y="0.08" aria-label="Top right"><span></span></button>
-            <button type="button" data-x="0.08" data-y="0.5"  aria-label="Middle left"><span></span></button>
-            <button type="button" data-x="0.5"  data-y="0.5"  aria-label="Center"><span></span></button>
-            <button type="button" data-x="0.92" data-y="0.5"  aria-label="Middle right"><span></span></button>
-            <button type="button" data-x="0.08" data-y="0.92" aria-label="Bottom left"><span></span></button>
-            <button type="button" data-x="0.5"  data-y="0.92" aria-label="Bottom center"><span></span></button>
-            <button type="button" data-x="0.92" data-y="0.92" aria-label="Bottom right"><span></span></button>
-          </div>
-          <p class="field-hint">Or drag the watermark directly on the photo. Drag the small handle at its corner to resize.</p>
-        </div>
-
-        <button type="button" class="ghost-btn" id="resetBtn">Reset placement</button>
-      </div>
-    </div>
-
-    <div class="step is-disabled" id="stepDownloadCard">
-      <p class="step-eyebrow">04 / Download</p>
-      <div class="step-body">
-
-        <div class="field">
-          <div class="field-label-row"><label>File format</label></div>
-          <div class="format-toggle" role="radiogroup" aria-label="Download format">
-            <label>
-              <input type="radio" name="format" value="png" checked>
-              <span class="format-pill">PNG <em>lossless</em></span>
-            </label>
-            <label>
-              <input type="radio" name="format" value="jpg">
-              <span class="format-pill">JPG <em>smaller file</em></span>
-            </label>
-          </div>
-        </div>
-
-        <button type="button" class="primary-btn" id="downloadBtn">Download watermarked photo</button>
-        <p class="field-hint" id="downloadHint">Exports at your photo's full original resolution.</p>
-      </div>
-    </div>
-
-  </aside>
-</main>
-
-<footer class="site-footer">
-  <p>No accounts, no uploads, no database. Your photo and logo are decoded in memory and never leave this browser tab — refreshing the page clears everything.</p>
-</footer>
-
-<input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
-<input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="script.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>

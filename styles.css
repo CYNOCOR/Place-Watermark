@@ -32,24 +32,37 @@ button{ font-family: inherit; }
 
 /* ============ HEADER ============ */
 .site-header{
-  padding: 2.75rem 2rem 1.75rem;
+  padding: 2.25rem 1.5rem 1.5rem;
   border-bottom: 1px solid var(--line);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.header-logo{
+  height: clamp(55px, 8vw, 95px);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+  transition: height 0.2s ease;
 }
 .wordmark{
   font-family: var(--font-display);
   font-optical-sizing: auto;
   font-weight: 600;
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
   letter-spacing: 0.02em;
 }
-.wordmark .dot{ color: var(--brass); }
 .tagline{
-  margin: 0.6rem auto 0;
-  max-width: 34rem;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: clamp(0.82rem, 1.8vw, 0.95rem);
+  max-width: 38rem;
+  margin: 0.4rem auto 0;
+  padding: 0 1rem;
 }
+
 
 /* ============ LAYOUT ============ */
 .workspace{
@@ -62,8 +75,11 @@ button{ font-family: inherit; }
   align-items: start;
 }
 
-@media (max-width: 900px){
-  .workspace{ grid-template-columns: 1fr; padding: 0 1.25rem; }
+.stage-container{
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
 }
 
 /* ============ STAGE ============ */
@@ -254,9 +270,9 @@ button{ font-family: inherit; }
 }
 
 .photo-list{
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
   max-height: 260px;
   overflow-y: auto;
   margin: -0.1rem -0.1rem 0.2rem;
@@ -356,6 +372,7 @@ button{ font-family: inherit; }
 
 input[type="range"]{
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 3px;
   background: var(--line);
@@ -479,18 +496,158 @@ input[type="range"]::-moz-range-thumb{
 }
 .ghost-btn:hover{ border-color: var(--brass); color: var(--brass-bright); }
 
-/* ============ FOOTER ============ */
-.site-footer{
+/* ============ PRIVACY BANNER ============ */
+.privacy-note-bar {
   max-width: 1280px;
-  margin: 1rem auto 3rem;
+  margin: 3rem auto 0;
   padding: 0 2rem;
+}
+
+.privacy-note-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(201, 154, 75, 0.05);
+  border: 1px solid rgba(201, 154, 75, 0.2);
+  border-radius: 6px;
+  padding: 0.85rem 1.25rem;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.5;
   text-align: center;
 }
-.site-footer p{
-  color: var(--muted);
-  font-size: 0.78rem;
-  max-width: 32rem;
+
+.privacy-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--brass-bright);
+  flex-shrink: 0;
+}
+
+/* ============ FOOTER ============ */
+.site-footer{
+  width: 100%;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  margin-top: 3rem;
+  padding: 3.5rem 0 2rem;
+}
+
+.footer-inner{
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-grid{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.footer-brand{
+  max-width: 580px;
+}
+
+.footer-brand-logo{
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+
+.footer-tagline{
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.footer-app-info{
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.footer-heading{
+  margin: 0 0 0.35rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.footer-subtext{
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+
+.footer-contact-list,
+.footer-contact-list li {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.footer-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+}
+
+.footer-contact-list a{
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-contact-list a:hover{
+  color: var(--brass-bright);
+}
+
+.footer-contact-list span{
+  color: var(--muted);
+}
+
+/* Footer Bottom Bar */
+.footer-bottom{
+  border-top: 1px solid var(--line);
+  padding-top: 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.copyright{
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.footer-socials{
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.footer-socials a{
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.footer-socials a:hover{
+  color: var(--brass-bright);
+  transform: translateY(-2px);
 }
 
 .hidden{ display: none !important; }
@@ -504,3 +661,221 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible{
 @media (prefers-reduced-motion: reduce){
   *{ transition: none !important; }
 }
+
+/* ============ RESPONSIVE DESIGN & MOBILE OPTIMIZATIONS ============ */
+
+/* Preset grid active state indicator */
+.preset-grid button.is-active {
+  border-color: var(--brass);
+  background: rgba(201, 154, 75, 0.2);
+}
+.preset-grid button.is-active span {
+  background: var(--brass-bright);
+}
+
+/* Tablet & Mobile Screens (<= 900px) */
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    padding: 0 1.25rem;
+    gap: 1.25rem;
+    margin: 1.25rem auto;
+  }
+
+  .stage-panel {
+    padding: 1.5rem;
+    min-height: 380px;
+  }
+
+  #previewCanvas {
+    max-height: 55vh;
+  }
+}
+
+/* Mobile Screens (<= 640px) */
+@media (max-width: 640px) {
+  .site-header {
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .header-logo {
+    height: clamp(45px, 12vw, 65px);
+  }
+
+  .workspace {
+    padding: 0 0.75rem;
+    gap: 1rem;
+    margin: 1rem auto;
+  }
+
+  .stage-panel {
+    padding: 1rem 0.75rem;
+    min-height: 320px;
+    border-radius: 6px;
+  }
+
+  .reg-mark {
+    display: none; /* Hide registration corner marks on mobile to maximize canvas space */
+  }
+
+  #previewCanvas {
+    max-height: 48vh;
+  }
+
+  /* Overlay badges adjustment on mobile */
+  .coord-readout {
+    top: 0.5rem;
+    left: 0.5rem;
+    font-size: 0.68rem;
+    padding: 0.25rem 0.45rem;
+  }
+
+  .preview-flag {
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.45rem;
+    max-width: 60%;
+  }
+
+  .stage-hint {
+    bottom: 0.6rem;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.6rem;
+    white-space: normal;
+    text-align: center;
+    max-width: 90%;
+  }
+
+  /* Dropzones */
+  .dropzone {
+    padding: 2rem 1rem;
+  }
+
+  .photo-list {
+    grid-template-columns: 1fr;
+  }
+
+  .dz-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dz-title {
+    font-size: 0.95rem;
+  }
+
+  .dz-sub {
+    font-size: 0.78rem;
+  }
+
+  /* Controls touch targets */
+  .step {
+    padding: 1rem;
+  }
+
+  .preset-grid {
+    gap: 0.5rem;
+  }
+
+  .preset-grid button {
+    min-height: 44px;
+  }
+
+  .format-pill {
+    padding: 0.65rem 0.5rem;
+    min-height: 44px;
+  }
+
+  .primary-btn {
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+    min-height: 48px;
+  }
+
+  .ghost-btn {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+  }
+
+  /* Touch-friendly range sliders */
+  input[type="range"] {
+    height: 6px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+    margin-top: -8px;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .remove-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  .privacy-note-bar {
+    padding: 0 0.75rem;
+    margin: 1.5rem auto 0;
+  }
+
+  .privacy-note-inner {
+    font-size: 0.78rem;
+    padding: 0.75rem 0.85rem;
+    text-align: left;
+  }
+
+  .site-footer {
+    margin-top: 2rem;
+    padding: 2.5rem 0 1.5rem;
+  }
+
+  .footer-grid {
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .footer-app-info {
+    text-align: left;
+  }
+
+  .footer-brand-logo {
+    height: 34px;
+  }
+
+  .footer-bottom {
+    flex-direction: column-reverse;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+    padding-top: 1.5rem;
+  }
+}
+
+/* Small Mobile Screens (<= 380px) */
+@media (max-width: 380px) {
+  .site-header {
+    padding: 1.25rem 0.5rem 0.85rem;
+  }
+
+  .header-logo {
+    height: 42px;
+  }
+
+  .stage-panel {
+    padding: 0.5rem;
+    min-height: 260px;
+  }
+
+  #previewCanvas {
+    max-height: 40vh;
+  }
+}
+

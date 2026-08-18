@@ -1,48 +1,39 @@
-'use strict';
-
-/* ==========================================================
-   Markline — everything runs in the browser.
-   Photos and logos are only ever held as in-memory Image
-   objects / object URLs. Nothing is sent anywhere, and
-   nothing is written to a database or disk.
-   ========================================================== */
-
 // ---- DOM references ----
-const photoDropzone   = document.getElementById('photoDropzone');
-const photoInput      = document.getElementById('photoInput');
-const photoError      = document.getElementById('photoError');
-const photoStepBody   = document.getElementById('photoStepBody');
+const photoDropzone = document.getElementById('photoDropzone');
+const photoInput = document.getElementById('photoInput');
+const photoError = document.getElementById('photoError');
+const photoStepBody = document.getElementById('photoStepBody');
 
-const logoDropzone    = document.getElementById('logoDropzone');
-const logoInput       = document.getElementById('logoInput');
-const logoError       = document.getElementById('logoError');
-const logoLoaded      = document.getElementById('logoLoaded');
-const logoThumb       = document.getElementById('logoThumb');
-const logoName        = document.getElementById('logoName');
-const replaceLogoBtn  = document.getElementById('replaceLogoBtn');
-const removeLogoBtn   = document.getElementById('removeLogoBtn');
+const logoDropzone = document.getElementById('logoDropzone');
+const logoInput = document.getElementById('logoInput');
+const logoError = document.getElementById('logoError');
+const logoLoaded = document.getElementById('logoLoaded');
+const logoThumb = document.getElementById('logoThumb');
+const logoName = document.getElementById('logoName');
+const replaceLogoBtn = document.getElementById('replaceLogoBtn');
+const removeLogoBtn = document.getElementById('removeLogoBtn');
 const logoAppliesHint = document.getElementById('logoAppliesHint');
 
-const stepLogoCard     = document.getElementById('stepLogoCard');
-const stepAdjustCard   = document.getElementById('stepAdjustCard');
+const stepLogoCard = document.getElementById('stepLogoCard');
+const stepAdjustCard = document.getElementById('stepAdjustCard');
 const stepDownloadCard = document.getElementById('stepDownloadCard');
 
-const canvasWrap    = document.getElementById('canvasWrap');
+const canvasWrap = document.getElementById('canvasWrap');
 const previewCanvas = document.getElementById('previewCanvas');
-const ctx            = previewCanvas.getContext('2d');
-const coordReadout  = document.getElementById('coordReadout');
-const stageHint      = document.getElementById('stageHint');
-const previewFlag     = document.getElementById('previewFlag');
+const ctx = previewCanvas.getContext('2d');
+const coordReadout = document.getElementById('coordReadout');
+const stageHint = document.getElementById('stageHint');
+const previewFlag = document.getElementById('previewFlag');
 const previewFlagName = document.getElementById('previewFlagName');
 
-const scaleSlider   = document.getElementById('scaleSlider');
-const scaleValue    = document.getElementById('scaleValue');
+const scaleSlider = document.getElementById('scaleSlider');
+const scaleValue = document.getElementById('scaleValue');
 const opacitySlider = document.getElementById('opacitySlider');
-const opacityValue  = document.getElementById('opacityValue');
-const presetGrid    = document.getElementById('presetGrid');
-const resetBtn      = document.getElementById('resetBtn');
-const downloadBtn   = document.getElementById('downloadBtn');
-const downloadHint  = document.getElementById('downloadHint');
+const opacityValue = document.getElementById('opacityValue');
+const presetGrid = document.getElementById('presetGrid');
+const resetBtn = document.getElementById('resetBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const downloadHint = document.getElementById('downloadHint');
 
 // ---- state ----
 // Every uploaded photo: { img: HTMLImageElement, name: string }
@@ -54,7 +45,7 @@ let photoFileName = 'photo';
 let logoImg = null;
 let logoFileName = 'logo';
 
-// Watermark placement — one shared setting, applied to every photo on export.
+// Watermark placement - one shared setting, applied to every photo on export.
 const DEFAULTS = { x: 0.5, y: 0.5, scale: 0.22, opacity: 0.8 };
 let state = { ...DEFAULTS };
 
@@ -69,7 +60,7 @@ const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 function isSupportedImageFile(file) {
   if (!file) return false;
   if (file.type && file.type.startsWith('image/')) return true;
-  // Some browsers report no MIME type for HEIC/HEIF — fall back to extension.
+  // Some browsers report no MIME type for HEIC/HEIF - fall back to extension.
   return /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || '');
 }
 
@@ -137,7 +128,7 @@ async function handlePhotoFiles(files) {
 
   const valid = files.filter(isSupportedImageFile);
   if (valid.length === 0) {
-    showError(photoError, "Couldn't open those files — please use JPG, PNG, WEBP, or HEIC photos.");
+    showError(photoError, "Couldn't open those files - please use JPG, PNG, WEBP, or HEIC photos.");
     return;
   }
 
@@ -273,7 +264,7 @@ function updatePreviewFlag() {
 }
 
 function setupCanvasForPhoto() {
-  const MAX_SIDE = 1600; // preview only — export always uses full resolution
+  const MAX_SIDE = 1600; // preview only - export always uses full resolution
   const w = photoImg.naturalWidth;
   const h = photoImg.naturalHeight;
   const scale = Math.min(1, MAX_SIDE / Math.max(w, h));
@@ -315,7 +306,7 @@ async function handleLogoFile(file) {
   } catch (err) {
     showError(
       logoError,
-      "Couldn't open that logo — please use a JPG, PNG, WEBP, or HEIC image."
+      "Couldn't open that logo - please use a JPG, PNG, WEBP, or HEIC image."
     );
   }
 }
@@ -440,7 +431,7 @@ function onPointerDown(e) {
   const p = getCanvasPos(e);
   const b = logoBounds();
   const distToResize = Math.hypot(p.x - b.right, p.y - b.bottom);
-  const handleRadius = 18;
+  const handleRadius = e.pointerType === 'touch' ? 32 : 18;
 
   if (distToResize < handleRadius) {
     dragMode = 'resize';
@@ -515,6 +506,8 @@ opacitySlider.addEventListener('input', () => {
 presetGrid.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-x]');
   if (!btn || !logoImg) return;
+  presetGrid.querySelectorAll('button').forEach(b => b.classList.remove('is-active'));
+  btn.classList.add('is-active');
   state.x = Number(btn.dataset.x);
   state.y = Number(btn.dataset.y);
   updateReadout();
@@ -523,6 +516,7 @@ presetGrid.addEventListener('click', (e) => {
 
 resetBtn.addEventListener('click', () => {
   if (!logoImg) return;
+  presetGrid.querySelectorAll('button').forEach(b => b.classList.remove('is-active'));
   state = { ...DEFAULTS };
   syncControlsFromState();
   requestRedraw();
@@ -584,7 +578,7 @@ wireDropzone(
 function updateDownloadUi() {
   if (photos.length > 1) {
     downloadBtn.textContent = `Download all as ZIP (${photos.length})`;
-    downloadHint.textContent = "Every photo gets the same logo, size, opacity, and position — exported at each photo's own full resolution, bundled into one .zip.";
+    downloadHint.textContent = "Every photo gets the same logo, size, opacity, and position - exported at each photo's own full resolution, bundled into one .zip.";
   } else {
     downloadBtn.textContent = 'Download watermarked photo';
     downloadHint.textContent = "Exports at your photo's full original resolution.";
@@ -603,7 +597,7 @@ function renderWatermarkedBlob(img, mime, quality) {
     const cctx = c.getContext('2d');
 
     if (mime === 'image/jpeg') {
-      // JPEG has no alpha channel — flatten onto white first in case the
+      // JPEG has no alpha channel - flatten onto white first in case the
       // source photo itself has transparent areas (e.g. a PNG photo).
       cctx.fillStyle = '#ffffff';
       cctx.fillRect(0, 0, w, h);
