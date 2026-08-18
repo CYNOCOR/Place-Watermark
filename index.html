@@ -4,7 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Markline - Watermark your photos, privately</title>
+  <title>Mark Line - Free & Private Batch Photo Watermarking Tool by CYNOCOR</title>
+  <meta name="description"
+    content="Mark Line is a free, 100% private batch photo watermarking tool. Easily stamp logos onto photos directly in your browser without uploading any data.">
   <link rel="icon" type="image/png" href="logo3W.png">
   <link
     href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
@@ -16,9 +18,11 @@
 <body>
 
   <header class="site-header">
-    <img src="logo2.png" alt="cynocor logo" class="header-logo">
-    <div class="wordmark">Mark Line by CYNOCOR</div>
-    <p class="tagline">Stamp your photos with a logo. Everything happens on your device - nothing is ever uploaded.</p>
+    <img src="logo2.png" alt="CYNOCOR logo" class="header-logo">
+    <h1 class="wordmark">Mark Line - Batch Photo Watermarking Tool</h1>
+    <div class="hero-badge">100% Private · Runs In Your Browser · Zero Server Uploads</div>
+    <p class="tagline">Stamp your photos with your logo or watermark in full resolution. Everything processes locally on
+      your device - your images and logos never leave your computer.</p>
   </header>
 
   <main class="workspace">
@@ -158,6 +162,14 @@
             </div>
           </div>
 
+          <div class="field" id="qualityField">
+            <div class="field-label-row">
+              <label for="qualitySlider">Quality</label>
+              <span class="field-value" id="qualityValue">100%</span>
+            </div>
+            <input type="range" id="qualitySlider" min="10" max="100" step="1" value="100">
+          </div>
+
           <button type="button" class="primary-btn" id="downloadBtn">Download watermarked photo</button>
           <p class="field-hint" id="downloadHint">Exports at your photo's full original resolution.</p>
         </div>
@@ -201,7 +213,7 @@
       <div class="footer-bottom">
         <p class="copyright">© 2026 CYNOCOR Tools. All rights reserved.</p>
         <div class="footer-socials">
-          <a href="mailto:" aria-label="Email" title="Email">
+          <a href="mailto:cynocorofficial@gmail.com" aria-label="Email" title="Email">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -222,7 +234,7 @@
               <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
             </svg>
           </a>
-          <a href="#" aria-label="LinkedIn" title="LinkedIn">
+          <a href="https://www.linkedin.com/company/cynocor/" aria-label="LinkedIn" title="LinkedIn">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />

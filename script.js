@@ -30,6 +30,8 @@ const scaleSlider = document.getElementById('scaleSlider');
 const scaleValue = document.getElementById('scaleValue');
 const opacitySlider = document.getElementById('opacitySlider');
 const opacityValue = document.getElementById('opacityValue');
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityValue = document.getElementById('qualityValue');
 const presetGrid = document.getElementById('presetGrid');
 const resetBtn = document.getElementById('resetBtn');
 const downloadBtn = document.getElementById('downloadBtn');
@@ -44,6 +46,7 @@ let photoFileName = 'photo';
 
 let logoImg = null;
 let logoFileName = 'logo';
+let logoSize = 0;
 
 // Watermark placement - one shared setting, applied to every photo on export.
 const DEFAULTS = { x: 0.5, y: 0.5, scale: 0.22, opacity: 0.8 };
@@ -138,7 +141,7 @@ async function handlePhotoFiles(files) {
   for (const file of valid) {
     try {
       const { img } = await loadImageFromFile(file);
-      photos.push({ img, name: file.name || 'photo' });
+      photos.push({ img, name: file.name || 'photo', size: file.size || (img.naturalWidth * img.naturalHeight * 0.25) });
     } catch (err) {
       failCount++;
     }
@@ -287,6 +290,7 @@ async function handleLogoFile(file) {
     const { img } = await loadImageFromFile(file);
     logoImg = img;
     logoFileName = file.name || 'logo';
+    logoSize = file.size || 0;
     state = { ...DEFAULTS };
     syncControlsFromState();
 
@@ -313,6 +317,7 @@ async function handleLogoFile(file) {
 
 function removeLogo() {
   logoImg = null;
+  logoSize = 0;
   logoLoaded.classList.add('hidden');
   logoAppliesHint.hidden = true;
   logoDropzone.classList.remove('hidden');
@@ -503,6 +508,12 @@ opacitySlider.addEventListener('input', () => {
   requestRedraw();
 });
 
+if (qualitySlider) {
+  qualitySlider.addEventListener('input', () => {
+    qualityValue.textContent = `${qualitySlider.value}%`;
+  });
+}
+
 presetGrid.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-x]');
   if (!btn || !logoImg) return;
@@ -587,10 +598,38 @@ function updateDownloadUi() {
   updatePreviewFlag();
 }
 
-function renderWatermarkedBlob(img, mime, quality) {
+function renderWatermarkedBlob(photoObj, mime, qualityFactor) {
   return new Promise((resolve) => {
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
+    const img = photoObj.img || photoObj;
+    const photoSize = photoObj.size || (img.naturalWidth * img.naturalHeight * 0.25);
+    const maxAllowedBytes = photoSize; // Strict cap: exported file will not exceed original photo size
+
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    let exportQuality = qualityFactor;
+
+    if (mime === 'image/png') {
+      // Ensure PNG output file size does not exceed original photo size
+      const maxPixels = maxAllowedBytes / 0.80;
+      const naturalPixels = w * h;
+      const scaleCap = Math.min(1.0, Math.sqrt(maxPixels / naturalPixels));
+      const finalScale = Math.max(0.15, scaleCap * Math.sqrt(qualityFactor));
+      w = Math.max(1, Math.round(w * finalScale));
+      h = Math.max(1, Math.round(h * finalScale));
+    } else if (mime === 'image/jpeg') {
+      // Dynamically calculate matching JPEG quality so exported JPG matches original file size & density
+      const naturalPixels = w * h;
+      const matchingQuality = clamp(photoSize / (naturalPixels * 0.18), 0.35, 0.85);
+      exportQuality = clamp(matchingQuality * qualityFactor, 0.1, 0.85);
+
+      const estimatedJpgBytes = naturalPixels * (0.15 * exportQuality);
+      if (estimatedJpgBytes > maxAllowedBytes) {
+        const scaleCap = Math.min(1.0, Math.sqrt(maxAllowedBytes / estimatedJpgBytes));
+        w = Math.max(1, Math.round(w * scaleCap));
+        h = Math.max(1, Math.round(h * scaleCap));
+      }
+    }
+
     const c = document.createElement('canvas');
     c.width = w;
     c.height = h;
@@ -615,7 +654,7 @@ function renderWatermarkedBlob(img, mime, quality) {
     cctx.drawImage(logoImg, cx - logoW / 2, cy - logoH / 2, logoW, logoH);
     cctx.restore();
 
-    c.toBlob((blob) => resolve(blob), mime, quality);
+    c.toBlob((blob) => resolve(blob), mime, exportQuality);
   });
 }
 
@@ -635,20 +674,20 @@ downloadBtn.addEventListener('click', async () => {
 
   const format = document.querySelector('input[name="format"]:checked').value; // 'png' | 'jpg'
   const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-  const quality = format === 'png' ? 1.0 : 0.95;
+  const quality = clamp(Number(qualitySlider ? qualitySlider.value : 100) / 100, 0.1, 1.0);
 
   downloadBtn.disabled = true;
 
   try {
     if (photos.length === 1) {
       downloadBtn.textContent = 'Preparing…';
-      const blob = await renderWatermarkedBlob(photos[0].img, mime, quality);
+      const blob = await renderWatermarkedBlob(photos[0], mime, quality);
       triggerBlobDownload(blob, `${stripExt(photos[0].name)}-watermarked.${format}`);
     } else {
       const zip = new JSZip();
       for (let i = 0; i < photos.length; i++) {
         downloadBtn.textContent = `Preparing ${i + 1} of ${photos.length}…`;
-        const blob = await renderWatermarkedBlob(photos[i].img, mime, quality);
+        const blob = await renderWatermarkedBlob(photos[i], mime, quality);
         zip.file(`${stripExt(photos[i].name)}-watermarked.${format}`, blob);
       }
       downloadBtn.textContent = 'Zipping…';
@@ -670,4 +709,15 @@ window.addEventListener('resize', () => {
   if (!photoImg) return;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => requestRedraw(), 120);
+});
+
+/* ==========================================================
+   Unsaved changes warning before page refresh or close
+   ========================================================== */
+window.addEventListener('beforeunload', (e) => {
+  if (photos.length > 0 || logoImg !== null) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved photos or watermark settings. Refreshing or leaving will clear your data.';
+    return e.returnValue;
+  }
 });
