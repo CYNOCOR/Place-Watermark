@@ -14,6 +14,16 @@ const replaceLogoBtn = document.getElementById('replaceLogoBtn');
 const removeLogoBtn = document.getElementById('removeLogoBtn');
 const logoAppliesHint = document.getElementById('logoAppliesHint');
 
+const wmTypeRadios = document.querySelectorAll('input[name="wmType"]');
+const imageWmContainer = document.getElementById('imageWmContainer');
+const textWmContainer = document.getElementById('textWmContainer');
+const wmTextInput = document.getElementById('wmTextInput');
+const wmFontSelect = document.getElementById('wmFontSelect');
+const colorPresets = document.getElementById('colorPresets');
+const wmCustomColor = document.getElementById('wmCustomColor');
+const customColorWrapper = document.getElementById('customColorWrapper');
+const wmShadowCheck = document.getElementById('wmShadowCheck');
+
 const stepLogoCard = document.getElementById('stepLogoCard');
 const stepAdjustCard = document.getElementById('stepAdjustCard');
 const stepDownloadCard = document.getElementById('stepDownloadCard');
@@ -43,6 +53,14 @@ let photos = [];
 let activePhotoIndex = -1;   // which photo is currently shown in the canvas
 let photoImg = null;         // convenience reference to photos[activePhotoIndex].img
 let photoFileName = 'photo';
+
+let watermarkType = 'image'; // 'image' | 'text'
+let textWmState = {
+  text: '© CYNOCOR',
+  font: 'Inter, sans-serif',
+  color: '#ffffff',
+  shadow: true,
+};
 
 let logoImg = null;
 let logoFileName = 'logo';
@@ -161,6 +179,7 @@ async function handlePhotoFiles(files) {
     photoDropzone.classList.add('hidden');
     canvasWrap.classList.remove('hidden');
     enableStep(stepLogoCard);
+    updateWatermarkStepState();
   }
 
   renderPhotoStepBody();
@@ -282,6 +301,34 @@ function setupCanvasForPhoto() {
    Logo upload / removal
    ========================================================== */
 
+function hasActiveWatermark() {
+  if (watermarkType === 'image') {
+    return logoImg !== null;
+  }
+  return textWmState.text.trim().length > 0;
+}
+
+function updateWatermarkStepState() {
+  if (photos.length === 0) return;
+  if (hasActiveWatermark()) {
+    enableStep(stepAdjustCard);
+    enableStep(stepDownloadCard);
+    coordReadout.hidden = false;
+    stageHint.classList.add('hidden');
+  } else {
+    disableStep(stepAdjustCard);
+    disableStep(stepDownloadCard);
+    coordReadout.hidden = true;
+    stageHint.classList.remove('hidden');
+  }
+  updateDownloadUi();
+  requestRedraw();
+}
+
+/* ==========================================================
+   Logo upload / removal
+   ========================================================== */
+
 async function handleLogoFile(file) {
   clearError(logoError);
   if (!file) return;
@@ -298,15 +345,8 @@ async function handleLogoFile(file) {
     logoName.textContent = logoFileName;
     logoDropzone.classList.add('hidden');
     logoLoaded.classList.remove('hidden');
-    logoAppliesHint.hidden = photos.length <= 1;
 
-    enableStep(stepAdjustCard);
-    enableStep(stepDownloadCard);
-    coordReadout.hidden = false;
-    stageHint.classList.add('hidden');
-    updateDownloadUi();
-
-    requestRedraw();
+    updateWatermarkStepState();
   } catch (err) {
     showError(
       logoError,
@@ -323,45 +363,83 @@ function removeLogo() {
   logoDropzone.classList.remove('hidden');
   clearError(logoError);
 
-  disableStep(stepAdjustCard);
-  disableStep(stepDownloadCard);
-  coordReadout.hidden = true;
-  stageHint.classList.remove('hidden');
-
-  requestRedraw();
+  updateWatermarkStepState();
 }
 
 /* ==========================================================
-   Canvas drawing
+   Canvas drawing & Bounds Calculation
    ========================================================== */
 
-function logoBounds() {
-  const w = previewCanvas.width;
-  const h = previewCanvas.height;
-  const logoW = state.scale * w;
-  const logoH = logoW * (logoImg.naturalHeight / logoImg.naturalWidth);
+function watermarkBounds(targetWidth, targetHeight, canvasCtx) {
+  const w = targetWidth;
+  const h = targetHeight;
   const cx = state.x * w;
   const cy = state.y * h;
-  return {
-    cx, cy, logoW, logoH,
-    left: cx - logoW / 2,
-    top: cy - logoH / 2,
-    right: cx + logoW / 2,
-    bottom: cy + logoH / 2,
-  };
+
+  if (watermarkType === 'image') {
+    if (!logoImg) return { cx, cy, logoW: 0, logoH: 0, left: cx, top: cy, right: cx, bottom: cy };
+    const logoW = state.scale * w;
+    const logoH = logoW * (logoImg.naturalHeight / logoImg.naturalWidth);
+    return {
+      cx, cy, logoW, logoH,
+      left: cx - logoW / 2,
+      top: cy - logoH / 2,
+      right: cx + logoW / 2,
+      bottom: cy + logoH / 2,
+    };
+  } else {
+    const textStr = textWmState.text || ' ';
+    const fontSize = Math.max(12, state.scale * w * 0.35);
+    const activeCtx = canvasCtx || ctx;
+
+    activeCtx.save();
+    activeCtx.font = `${fontSize}px ${textWmState.font}`;
+    const metrics = activeCtx.measureText(textStr);
+    activeCtx.restore();
+
+    const textW = Math.max(metrics.width || (fontSize * textStr.length * 0.6), 10);
+    const textH = fontSize * 1.1;
+
+    return {
+      cx, cy, logoW: textW, logoH: textH, fontSize,
+      left: cx - textW / 2,
+      top: cy - textH / 2,
+      right: cx + textW / 2,
+      bottom: cy + textH / 2,
+    };
+  }
 }
 
 function redraw() {
   if (!photoImg) return;
   ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
   ctx.drawImage(photoImg, 0, 0, previewCanvas.width, previewCanvas.height);
-  if (!logoImg) return;
+  if (!hasActiveWatermark()) return;
 
-  const b = logoBounds();
+  const b = watermarkBounds(previewCanvas.width, previewCanvas.height, ctx);
 
   ctx.save();
   ctx.globalAlpha = state.opacity;
-  ctx.drawImage(logoImg, b.left, b.top, b.logoW, b.logoH);
+
+  if (watermarkType === 'image') {
+    if (logoImg) {
+      ctx.drawImage(logoImg, b.left, b.top, b.logoW, b.logoH);
+    }
+  } else {
+    ctx.font = `${b.fontSize}px ${textWmState.font}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (textWmState.shadow) {
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+      ctx.shadowBlur = Math.max(3, b.fontSize * 0.12);
+      ctx.shadowOffsetX = Math.max(1, b.fontSize * 0.04);
+      ctx.shadowOffsetY = Math.max(1, b.fontSize * 0.04);
+    }
+
+    ctx.fillStyle = textWmState.color;
+    ctx.fillText(textWmState.text, b.cx, b.cy);
+  }
   ctx.restore();
 
   if (interacting) {
@@ -432,9 +510,9 @@ function getCanvasPos(e) {
 }
 
 function onPointerDown(e) {
-  if (!logoImg) return;
+  if (!hasActiveWatermark()) return;
   const p = getCanvasPos(e);
-  const b = logoBounds();
+  const b = watermarkBounds(previewCanvas.width, previewCanvas.height, ctx);
   const distToResize = Math.hypot(p.x - b.right, p.y - b.bottom);
   const handleRadius = e.pointerType === 'touch' ? 32 : 18;
 
@@ -466,7 +544,7 @@ function onPointerMove(e) {
     state.x = clamp(cx / w, 0, 1);
     state.y = clamp(cy / h, 0, 1);
   } else if (dragMode === 'resize') {
-    const b = logoBounds();
+    const b = watermarkBounds(w, h, ctx);
     const dx = p.x - b.cx;
     const newLogoW = Math.max(2 * dx, 10);
     state.scale = clamp(newLogoW / w, 0.03, 0.9);
@@ -516,7 +594,7 @@ if (qualitySlider) {
 
 presetGrid.addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-x]');
-  if (!btn || !logoImg) return;
+  if (!btn || !hasActiveWatermark()) return;
   presetGrid.querySelectorAll('button').forEach(b => b.classList.remove('is-active'));
   btn.classList.add('is-active');
   state.x = Number(btn.dataset.x);
@@ -526,7 +604,7 @@ presetGrid.addEventListener('click', (e) => {
 });
 
 resetBtn.addEventListener('click', () => {
-  if (!logoImg) return;
+  if (!hasActiveWatermark()) return;
   presetGrid.querySelectorAll('button').forEach(b => b.classList.remove('is-active'));
   state = { ...DEFAULTS };
   syncControlsFromState();
@@ -589,12 +667,12 @@ wireDropzone(
 function updateDownloadUi() {
   if (photos.length > 1) {
     downloadBtn.textContent = `Download all as ZIP (${photos.length})`;
-    downloadHint.textContent = "Every photo gets the same logo, size, opacity, and position - exported at each photo's own full resolution, bundled into one .zip.";
+    downloadHint.textContent = "Every photo gets the same watermark, size, opacity, and position - exported at each photo's own full resolution, bundled into one .zip.";
   } else {
     downloadBtn.textContent = 'Download watermarked photo';
     downloadHint.textContent = "Exports at your photo's full original resolution.";
   }
-  logoAppliesHint.hidden = logoImg ? photos.length <= 1 : true;
+  logoAppliesHint.hidden = hasActiveWatermark() ? photos.length <= 1 : true;
   updatePreviewFlag();
 }
 
@@ -644,14 +722,31 @@ function renderWatermarkedBlob(photoObj, mime, qualityFactor) {
 
     cctx.drawImage(img, 0, 0, w, h);
 
-    const logoW = state.scale * w;
-    const logoH = logoW * (logoImg.naturalHeight / logoImg.naturalWidth);
-    const cx = state.x * w;
-    const cy = state.y * h;
+    const b = watermarkBounds(w, h, cctx);
 
     cctx.save();
     cctx.globalAlpha = state.opacity;
-    cctx.drawImage(logoImg, cx - logoW / 2, cy - logoH / 2, logoW, logoH);
+
+    if (watermarkType === 'image') {
+      if (logoImg) {
+        cctx.drawImage(logoImg, b.left, b.top, b.logoW, b.logoH);
+      }
+    } else {
+      cctx.font = `${b.fontSize}px ${textWmState.font}`;
+      cctx.textAlign = 'center';
+      cctx.textBaseline = 'middle';
+
+      if (textWmState.shadow) {
+        cctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        cctx.shadowBlur = Math.max(3, b.fontSize * 0.12);
+        cctx.shadowOffsetX = Math.max(1, b.fontSize * 0.04);
+        cctx.shadowOffsetY = Math.max(1, b.fontSize * 0.04);
+      }
+
+      cctx.fillStyle = textWmState.color;
+      cctx.fillText(textWmState.text, b.cx, b.cy);
+    }
+
     cctx.restore();
 
     c.toBlob((blob) => resolve(blob), mime, exportQuality);
@@ -670,7 +765,7 @@ function triggerBlobDownload(blob, filename) {
 }
 
 downloadBtn.addEventListener('click', async () => {
-  if (photos.length === 0 || !logoImg) return;
+  if (photos.length === 0 || !hasActiveWatermark()) return;
 
   const format = document.querySelector('input[name="format"]:checked').value; // 'png' | 'jpg'
   const mime = format === 'png' ? 'image/png' : 'image/jpeg';
@@ -701,6 +796,67 @@ downloadBtn.addEventListener('click', async () => {
 });
 
 /* ==========================================================
+   Custom Text Watermark Control Listeners
+   ========================================================== */
+
+wmTypeRadios.forEach((radio) => {
+  radio.addEventListener('change', (e) => {
+    watermarkType = e.target.value;
+    if (watermarkType === 'image') {
+      imageWmContainer.classList.remove('hidden');
+      textWmContainer.classList.add('hidden');
+    } else {
+      imageWmContainer.classList.add('hidden');
+      textWmContainer.classList.remove('hidden');
+    }
+    updateWatermarkStepState();
+  });
+});
+
+if (wmTextInput) {
+  wmTextInput.addEventListener('input', (e) => {
+    textWmState.text = e.target.value;
+    updateWatermarkStepState();
+  });
+}
+
+if (wmFontSelect) {
+  wmFontSelect.addEventListener('change', (e) => {
+    textWmState.font = e.target.value;
+    requestRedraw();
+  });
+}
+
+if (colorPresets) {
+  colorPresets.addEventListener('click', (e) => {
+    const btn = e.target.closest('.color-btn');
+    if (!btn) return;
+    colorPresets.querySelectorAll('.color-btn').forEach(b => b.classList.remove('is-active'));
+    if (customColorWrapper) customColorWrapper.classList.remove('is-active');
+    btn.classList.add('is-active');
+    textWmState.color = btn.dataset.color;
+    if (wmCustomColor) wmCustomColor.value = btn.dataset.color;
+    requestRedraw();
+  });
+}
+
+if (wmCustomColor) {
+  wmCustomColor.addEventListener('input', (e) => {
+    if (colorPresets) colorPresets.querySelectorAll('.color-btn').forEach(b => b.classList.remove('is-active'));
+    if (customColorWrapper) customColorWrapper.classList.add('is-active');
+    textWmState.color = e.target.value;
+    requestRedraw();
+  });
+}
+
+if (wmShadowCheck) {
+  wmShadowCheck.addEventListener('change', (e) => {
+    textWmState.shadow = e.target.checked;
+    requestRedraw();
+  });
+}
+
+/* ==========================================================
    Keep the preview crisp on resize
    ========================================================== */
 
@@ -715,7 +871,7 @@ window.addEventListener('resize', () => {
    Unsaved changes warning before page refresh or close
    ========================================================== */
 window.addEventListener('beforeunload', (e) => {
-  if (photos.length > 0 || logoImg !== null) {
+  if (photos.length > 0 || logoImg !== null || (watermarkType === 'text' && textWmState.text.trim() !== '')) {
     e.preventDefault();
     e.returnValue = 'You have unsaved photos or watermark settings. Refreshing or leaving will clear your data.';
     return e.returnValue;

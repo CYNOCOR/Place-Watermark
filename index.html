@@ -53,7 +53,7 @@
           <div class="canvas-wrap hidden" id="canvasWrap">
             <canvas id="previewCanvas"></canvas>
             <div class="coord-readout" id="coordReadout" hidden>X 50% · Y 50% · Scale 22%</div>
-            <div class="stage-hint" id="stageHint">Upload a logo to start placing your watermark →</div>
+            <div class="stage-hint" id="stageHint">Upload a logo or enter custom text to start placing your watermark →</div>
             <div class="preview-flag" id="previewFlag" hidden>Previewing <span id="previewFlagName"></span> - the same
               placement applies to every photo</div>
           </div>
@@ -73,30 +73,91 @@
     <aside class="control-rail">
 
       <div class="step is-disabled" id="stepLogoCard">
-        <p class="step-eyebrow">02 / Logo</p>
+        <p class="step-eyebrow">02 / Watermark</p>
         <div class="step-body">
-          <div class="dropzone dropzone--small" id="logoDropzone" tabindex="-1" role="button"
-            aria-label="Upload a logo image" aria-disabled="true">
-            <svg class="dz-icon dz-icon--small" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" stroke-width="2" />
-              <circle cx="16" cy="18" r="3.5" stroke="currentColor" stroke-width="2" />
-              <path d="M4 32L16 22L26 30L34 24L44 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-            </svg>
-            <p class="dz-title dz-title--small">Drop your logo</p>
-            <p class="dz-sub">PNG with transparency works best</p>
-            <p class="dz-error" id="logoError" hidden></p>
+          <div class="wm-type-toggle" role="radiogroup" aria-label="Watermark type">
+            <label>
+              <input type="radio" name="wmType" value="image" id="wmTypeImage" checked>
+              <span class="wm-type-pill">
+                <svg class="wm-pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Logo Image
+              </span>
+            </label>
+            <label>
+              <input type="radio" name="wmType" value="text" id="wmTypeText">
+              <span class="wm-type-pill">
+                <svg class="wm-pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="9" y1="20" x2="15" y2="20"/></svg>
+                Custom Text
+              </span>
+            </label>
           </div>
-          <div class="logo-loaded hidden" id="logoLoaded">
-            <img id="logoThumb" alt="Your logo" class="logo-thumb">
-            <div>
-              <p class="logo-name" id="logoName">logo.png</p>
-              <div class="logo-actions">
-                <button type="button" class="link-btn" id="replaceLogoBtn">Replace</button>
-                <button type="button" class="link-btn link-btn--danger" id="removeLogoBtn">Remove</button>
+
+          <!-- Image Logo Panel -->
+          <div id="imageWmContainer">
+            <div class="dropzone dropzone--small" id="logoDropzone" tabindex="-1" role="button"
+              aria-label="Upload a logo image" aria-disabled="true">
+              <svg class="dz-icon dz-icon--small" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" stroke-width="2" />
+                <circle cx="16" cy="18" r="3.5" stroke="currentColor" stroke-width="2" />
+                <path d="M4 32L16 22L26 30L34 24L44 32" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              </svg>
+              <p class="dz-title dz-title--small">Drop your logo</p>
+              <p class="dz-sub">PNG with transparency works best</p>
+              <p class="dz-error" id="logoError" hidden></p>
+            </div>
+            <div class="logo-loaded hidden" id="logoLoaded">
+              <img id="logoThumb" alt="Your logo" class="logo-thumb">
+              <div>
+                <p class="logo-name" id="logoName">logo.png</p>
+                <div class="logo-actions">
+                  <button type="button" class="link-btn" id="replaceLogoBtn">Replace</button>
+                  <button type="button" class="link-btn link-btn--danger" id="removeLogoBtn">Remove</button>
+                </div>
               </div>
             </div>
           </div>
-          <p class="field-hint" id="logoAppliesHint" hidden>This logo and its placement apply to every photo you've
+
+          <!-- Custom Text Panel -->
+          <div class="text-wm-container hidden" id="textWmContainer">
+            <div class="field">
+              <label for="wmTextInput" class="field-label">Watermark Text</label>
+              <input type="text" id="wmTextInput" class="text-input" placeholder="e.g. © 2026 CYNOCOR" value="© CYNOCOR">
+            </div>
+            <div class="field">
+              <label for="wmFontSelect" class="field-label">Font Family</label>
+              <select id="wmFontSelect" class="select-input">
+                <option value="Inter, sans-serif">Sans-Serif (Inter)</option>
+                <option value="'Fraunces', serif">Serif (Fraunces)</option>
+                <option value="'JetBrains Mono', monospace">Monospace (JetBrains)</option>
+                <option value="Impact, sans-serif">Bold (Impact)</option>
+                <option value="Georgia, serif">Classic (Georgia)</option>
+                <option value="'Brush Script MT', cursive">Script / Signature</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="field-label-row">
+                <label>Text Color</label>
+              </div>
+              <div class="color-presets" id="colorPresets">
+                <button type="button" class="color-btn is-active" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+                <button type="button" class="color-btn" data-color="#000000" style="background:#000000" title="Black"></button>
+                <button type="button" class="color-btn" data-color="#C99A4B" style="background:#C99A4B" title="Brass Gold"></button>
+                <button type="button" class="color-btn" data-color="#E0785F" style="background:#E0785F" title="Red"></button>
+                <button type="button" class="color-btn" data-color="#4A90E2" style="background:#4A90E2" title="Blue"></button>
+                <div class="custom-color-wrapper" id="customColorWrapper" title="Custom color picker">
+                  <input type="color" id="wmCustomColor" class="custom-color-input" value="#ffffff">
+                </div>
+              </div>
+            </div>
+            <div class="field field--checkbox">
+              <label class="checkbox-label">
+                <input type="checkbox" id="wmShadowCheck" checked>
+                <span>Add contrast drop shadow</span>
+              </label>
+            </div>
+          </div>
+
+          <p class="field-hint" id="logoAppliesHint" hidden>This watermark and its placement apply to every photo you've
             added.</p>
         </div>
       </div>
